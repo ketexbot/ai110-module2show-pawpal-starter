@@ -127,18 +127,23 @@ class Scheduler:
         return [task for task in tasks if task.is_complete == complete]
 
     def detect_conflicts(self, tasks: list) -> list:
-        """Detect scheduling conflicts (same pet, same time)."""
-        conflicts = []
-        seen = {}
+        """Detect scheduling conflicts (tasks at the same time)."""
+        warnings = []
+        seen_by_time = {}
 
         for task in tasks:
-            key = (task.pet_name, task.time)
-            if key in seen:
-                conflicts.append((seen[key], task))
+            if task.time in seen_by_time:
+                other = seen_by_time[task.time]
+                warnings.append(
+                    (
+                        f"Conflict at {task.time}: {other.pet_name} - {other.description} "
+                        f"and {task.pet_name} - {task.description}"
+                    )
+                )
             else:
-                seen[key] = task
+                seen_by_time[task.time] = task
 
-        return conflicts
+        return warnings
 
     def handle_recurrence(self, task: Task) -> Optional[Task]:
         """Create next occurrence for recurring tasks."""

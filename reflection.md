@@ -24,12 +24,10 @@ Core user actions:
 **b. Design changes**
 
 - Did your design change during implementation?
-    - Yes. It changed.
 
 
 - If yes, describe at least one change and why you made it.
-    At first, I only focused on time and priority, but later I added a required field to tasks so important tasks (like medication) are handled first.
-    I also moved scheduling decisions into Scheduler so Pet only stores pet/task data.
+    
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
@@ -42,7 +40,9 @@ Core user actions:
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+- The scheduler currently treats conflicts as exact same-time matches and does not calculate partial time overlaps.
 - Why is that tradeoff reasonable for this scenario?
+- This keeps the logic simple and easy to understand while still giving useful warning messages for common scheduling collisions.
 
 ---
 
