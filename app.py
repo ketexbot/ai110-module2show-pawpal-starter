@@ -136,10 +136,29 @@ st.divider()
 st.subheader("Build Schedule")
 st.caption("Generate a schedule using your backend Scheduler class.")
 
+filter_col1, filter_col2 = st.columns(2)
+with filter_col1:
+    status_filter = st.selectbox("Status filter", ["pending", "complete", "all"], index=0)
+with filter_col2:
+    pet_filter_options = ["all"] + [pet.name for pet in st.session_state.owner.pets]
+    pet_filter = st.selectbox("Pet filter", pet_filter_options, index=0)
+
 if st.button("Generate schedule"):
     scheduler = Scheduler(st.session_state.owner)
     today_tasks = scheduler.get_todays_tasks()
     sorted_tasks = scheduler.sort_by_time(today_tasks)
+
+    if pet_filter != "all":
+        sorted_tasks = scheduler.filter_by_pet(sorted_tasks, pet_filter)
+
+    if status_filter != "all":
+        sorted_tasks = scheduler.filter_by_status(sorted_tasks, complete=(status_filter == "complete"))
+
+    conflict_warnings = scheduler.detect_conflicts(today_tasks)
+    if conflict_warnings:
+        st.warning("Schedule conflict warnings:")
+        for warning in conflict_warnings:
+            st.write(f"- {warning}")
 
     if sorted_tasks:
         st.success("Today's schedule generated.")
