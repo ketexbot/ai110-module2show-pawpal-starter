@@ -1,5 +1,7 @@
 import streamlit as st
 
+from pawpal_system import Owner, Pet, Scheduler, Task
+
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
 st.title("🐾 PawPal+")
@@ -38,51 +40,121 @@ At minimum, your system should:
 
 st.divider()
 
-st.subheader("Quick Demo Inputs (UI only)")
+st.subheader("Owner + Pet Setup")
 owner_name = st.text_input("Owner name", value="Jordan")
+
+if "owner" not in st.session_state:
+    st.session_state.owner = Owner(owner_name)
+
+if st.session_state.owner.name != owner_name:
+    st.session_state.owner.name = owner_name
+
 pet_name = st.text_input("Pet name", value="Mochi")
 species = st.selectbox("Species", ["dog", "cat", "other"])
+age = st.number_input("Pet age", min_value=0, max_value=50, value=3)
+
+if st.button("Add pet"):
+    existing_pet = st.session_state.owner.get_pet(pet_name)
+    if existing_pet is None:
+        st.session_state.owner.add_pet(Pet(name=pet_name, species=species, age=int(age)))
+        st.success(f"Added pet: {pet_name}")
+    else:
+        st.warning("A pet with that name already exists.")
+
+if st.session_state.owner.pets:
+    st.write("Current pets:")
+    st.table(
+        [
+            {"name": pet.name, "species": pet.species, "age": pet.age}
+            for pet in st.session_state.owner.pets
+        ]
+    )
+else:
+    st.info("No pets yet. Add one above.")
 
 st.markdown("### Tasks")
-st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
+st.caption("Add tasks to a selected pet. These tasks are stored in your Owner/Pet objects.")
 
-if "tasks" not in st.session_state:
-    st.session_state.tasks = []
+if st.session_state.owner.pets:
+    selected_pet_name = st.selectbox(
+        "Assign task to pet",
+        [pet.name for pet in st.session_state.owner.pets],
+    )
+else:
+    selected_pet_name = None
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     task_title = st.text_input("Task title", value="Morning walk")
 with col2:
     duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
 with col3:
     priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
+with col4:
+    task_time = st.text_input("Time (HH:MM)", value="08:00")
+
+frequency = st.selectbox("Frequency", ["once", "daily", "weekly"], index=0)
 
 if st.button("Add task"):
-    st.session_state.tasks.append(
-        {"title": task_title, "duration_minutes": int(duration), "priority": priority}
-    )
+    if selected_pet_name is None:
+        st.warning("Add a pet first, then add tasks.")
+    else:
+        pet = st.session_state.owner.get_pet(selected_pet_name)
+        if pet is not None:
+            pet.add_task(
+                Task(
+                    description=task_title,
+                    time=task_time,
+                    duration_minutes=int(duration),
+                    priority=priority,
+                    frequency=frequency,
+                )
+            )
+            st.success(f"Added task '{task_title}' to {selected_pet_name}")
 
-if st.session_state.tasks:
+all_tasks = st.session_state.owner.get_all_tasks()
+if all_tasks:
     st.write("Current tasks:")
-    st.table(st.session_state.tasks)
+    st.table(
+        [
+            {
+                "pet": task.pet_name,
+                "task": task.description,
+                "time": task.time,
+                "duration_minutes": task.duration_minutes,
+                "priority": task.priority,
+                "frequency": task.frequency,
+            }
+            for task in all_tasks
+        ]
+    )
 else:
     st.info("No tasks yet. Add one above.")
 
 st.divider()
 
 st.subheader("Build Schedule")
-st.caption("This button should call your scheduling logic once you implement it.")
+st.caption("Generate a schedule using your backend Scheduler class.")
 
 if st.button("Generate schedule"):
-    st.warning(
-        "Not implemented yet. Next step: create your scheduling logic (classes/functions) and call it here."
-    )
-    st.markdown(
-        """
-Suggested approach:
-1. Design your UML (draft).
-2. Create class stubs (no logic).
-3. Implement scheduling behavior.
-4. Connect your scheduler here and display results.
-"""
-    )
+    scheduler = Scheduler(st.session_state.owner)
+    today_tasks = scheduler.get_todays_tasks()
+    sorted_tasks = scheduler.sort_by_time(today_tasks)
+
+    if sorted_tasks:
+        st.success("Today's schedule generated.")
+        st.table(
+            [
+                {
+                    "pet": task.pet_name,
+                    "task": task.description,
+                    "time": task.time,
+                    "duration_minutes": task.duration_minutes,
+                    "priority": task.priority,
+                    "status": "complete" if task.is_complete else "pending",
+                }
+                for task in sorted_tasks
+            ]
+        )
+    else:
+        st.info("No tasks due today.")
