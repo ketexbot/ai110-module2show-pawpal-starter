@@ -2,16 +2,34 @@
 
 ## 1. System Design
 
+Core user actions:
+- Enter owner and pet information.
+- Add or edit pet care tasks with duration and priority.
+- Generate and review today's schedule.
+
+
+
 **a. Initial design**
 
 - Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+    The UML design has one class for the owner, one for the pet, one for each care task, and one planner class that picks which tasks fit the day based on time and priority.
 
+- What classes did you include, and what responsibilities did you assign to each?
+    I included four classes:
+    Owner stores the owner’s name, available time, and care preferences.
+    Pet stores pet details and keeps the pet’s task list.
+    Task represents one care activity with fields like duration, priority, category, and required status.
+    Scheduler retrieves and organizes tasks from the owner's pets.
+    
 **b. Design changes**
 
 - Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+    - Yes. It changed.
 
+
+- If yes, describe at least one change and why you made it.
+    At first, I only focused on time and priority, but later I added a required field to tasks so important tasks (like medication) are handled first.
+    I also moved scheduling decisions into Scheduler so Pet only stores pet/task data.
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
@@ -69,3 +87,4 @@
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
